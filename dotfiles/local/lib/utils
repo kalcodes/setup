@@ -1,0 +1,84 @@
+#!/usr/bin/env bash
+
+log() {
+	echo "[INFO] - " "$@"
+}
+
+warn() {
+	echo "[WARNING] - " "$@" | tee /dev/stderr 
+}
+
+error() {
+	echo "[ERROR] - " "$@" >&2 
+}
+
+unset_proxy() {
+	unset PROXY_HOST PROXY_PORT HTTP_PROXY HTTPS_PROXY NO_PROXY
+}
+
+export_proxy() {
+	export PROXY_PORT=${1:-8080}
+	export PROXY_HOST=$(ip route | awk '/default/ {print $3}')
+
+	[[ -z "$PROXY_HOST" ]] && 
+	{
+		error "failed to detect proxy host"
+		unset_proxy
+		return 1
+	}
+
+	</dev/tcp/$PROXY_HOST/$PROXY_PORT || 
+	{
+		error "port $PROXY_PORT is closed"
+		unset_proxy
+		return 1
+	}
+
+	export HTTP_PROXY="http://$PROXY_HOST:$PROXY_PORT"
+	export HTTPS_PROXY="$HTTP_PROXY"
+	export NO_PROXY="127.0.0.1,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16"
+}
+
+
+# Proxy Managment
+sysproxyctl() {
+	kwriteconfig6 \
+		--file /home/kalcodes/.config/kioslaverc \
+		--group "Proxy Settings" "$@"
+}
+
+enable_system_proxy() {
+	export_proxy
+	sysproxyctl --key ProxyType 1
+	sysproxyctl --key httpProxy "http://$PROXY_HOST $PROXY_PORT"
+	sysproxyctl --key httpsProxy "http://$PROXY_HOST $PROXY_PORT"
+	sysproxyctl --key NoProxyFor "$NO_PROXY"
+}
+
+disable_system_proxy() {
+	unset_proxy
+	sysproxyctl --key ProxyType 0
+}
+
+update_datetime() {
+	export_proxy
+
+	API_DATA=$(curl -skL "https://timeapi.kalcodes.workers.dev/api")
+	TIMESTAMP=$(echo $API_DATA | jq -r .iso)
+
+	if [[ -n "$TIMESTAMP" && "$TIMESTAMP" != "null" ]]; then
+		date -s "$TIMESTAMP"
+	fi
+	unset API_DATA TIMESTAMP
+}
+
+testdir () {
+	local dir=~/.testdir/$1
+	[[ -n $1 ]] && mkdir -p $dir
+	cd "$dir"
+}
+
+# dotenv file toolkit (1 - file, 2 - key, 3 - value)
+uenv () {
+	sed -i $1 -e s/^$2/=$3/
+}

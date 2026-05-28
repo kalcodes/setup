@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+
+
+port_scanner() {
+	local HOST=${1:-localhost}
+	local START=${2:-0}
+	local END=${3:-65536}
+
+	for PORT in {$START..$END}; do
+		echo "$HOST:$PORT" && return
+		# if : </dev/tcp/$HOST/$PORT; then
+		#	 echo "$PORT is open"
+		# fi
+	done
+}
+
+port_scanner $@

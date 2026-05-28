@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+# installer script
+
+
+install_dotfiles() {
+	shopt -s globstar
+	for path in $PWD/dotfiles/**; do
+
+		[[ $path =~ dotfiles/$ ]] && continue
+		local dist_path="${path/setup\/dotfiles\//.}"
+
+		[[ -d $path ]] && 
+		{
+			mkdir -p "$dist_path"
+			continue
+		}
+		
+		# what if the link is not pointing where we wanted?
+		[[ -e "$dist_path" && -L "$dist_path" ]] && continue
+		[[ -e "$dist_path" ]] && rm -ri "$dist_path"
+
+		ln -s "$path" "$dist_path"
+
+	done	
+	shopt -u globstar
+	unset path
+}
+install_dotfiles

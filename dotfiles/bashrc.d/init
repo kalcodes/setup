@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+
+if [[ -f $HOME/.local/lib/utils ]]; then
+	source "$HOME/.local/lib/utils"
+fi
+
+if type -p export_proxy; then
+	export_proxy >/dev/null 2>&1
+fi
+
+# Aliases
+alias sqlite=sqlite3
+alias chrome=google-chrome-stable
