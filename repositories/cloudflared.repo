@@ -1,7 +1,7 @@
-[cloudflared-stable]
-name=cloudflared-stable
+[cloudflared]
+name=Cloudflared stable
 baseurl=https://pkg.cloudflare.com/cloudflared/rpm
-enabled=1
+enabled=0
 type=rpm
 gpgcheck=1
 gpgkey=https://pkg.cloudflare.com/cloudflare-ascii-pubkey.gpg

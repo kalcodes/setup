@@ -18,19 +18,14 @@ unset_proxy() {
 
 export_proxy() {
 	export PROXY_PORT=${1:-8080}
-	export PROXY_HOST=$(ip route | awk '/default/ {print $3}')
 
-	[[ -z "$PROXY_HOST" ]] && 
-	{
-		error "failed to detect proxy host"
-		unset_proxy
+	ping -c1 -W1 _gateway >/dev/null 2>&1 || {
+		error "unable to reach gateway"
 		return 1
 	}
 
-	</dev/tcp/$PROXY_HOST/$PROXY_PORT || 
-	{
+	</dev/tcp/_gateway/$PROXY_PORT || {
 		error "port $PROXY_PORT is closed"
-		unset_proxy
 		return 1
 	}
 
@@ -61,21 +56,26 @@ disable_system_proxy() {
 }
 
 update_datetime() {
-	export_proxy
 
-	API_DATA=$(curl -skL "https://timeapi.kalcodes.workers.dev/api")
-	TIMESTAMP=$(echo $API_DATA | jq -r .iso)
+	</dev/tcp/_gateway/8123 && {
+		TIME=$(nc -i1 _gateway 8123 2>/dev/null)
+	}
 
-	if [[ -n "$TIMESTAMP" && "$TIMESTAMP" != "null" ]]; then
-		date -s "$TIMESTAMP"
+	[[ -z $TIME ]] && {
+		export_proxy
+		API_DATA=$(curl -skL "https://timeapi.kalcodes.workers.dev/api")
+		TIME=$(echo $API_DATA | jq -r .iso)
+	}
+	
+	if [[ -n "$TIME" && "$TIME" != "null" ]]; then
+		date -s "$TIME"
 	fi
-	unset API_DATA TIMESTAMP
+	unset TIME API_DATA
 }
 
 testdir () {
 	local dir=~/.testdir/$1
-	[[ -n $1 ]] && mkdir -p $dir
-	cd "$dir"
+	[[ -n $1 ]] && mkdir -p $dir cd "$dir"
 }
 
 # dotenv file toolkit (1 - file, 2 - key, 3 - value)

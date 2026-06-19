@@ -11,3 +11,5 @@ fi
 # Aliases
 alias sqlite=sqlite3
 alias chrome=google-chrome-stable
+alias ytdl-video='yt-dlp -f "bv*[height<=720]+ba/b[height<=720]" --merge-output-format mkv'
+alias ytdl-audio='yt-dlp -x --audio-format mp3 --audio-quality 0'

@@ -1,4 +1,5 @@
-[Dropbox]
+[dropbox]
+enabled=0
 name=Dropbox Repository
 baseurl=http://linux.dropbox.com/fedora/$releasever/
 gpgkey=https://linux.dropbox.com/fedora/rpm-public-key.asc

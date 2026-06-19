@@ -3,26 +3,48 @@
 
 
 install_dotfiles() {
+	cp dotfiles/bashrc.template dotfiles/bashrc
+
 	shopt -s globstar
-	for path in $PWD/dotfiles/**; do
+	for FILE in $PWD/dotfiles/**; do
 
-		[[ $path =~ dotfiles/$ ]] && continue
-		local dist_path="${path/setup\/dotfiles\//.}"
+		[[ $FILE =~ dotfiles/$ || $FILE =~ template ]] && continue
+		local DIST_PATH="${FILE/setup\/dotfiles\//.}"
 
-		[[ -d $path ]] && 
+		[[ -d $FILE ]] && 
 		{
-			mkdir -p "$dist_path"
+			mkdir -p "$DIST_PATH"
 			continue
 		}
 		
 		# what if the link is not pointing where we wanted?
-		[[ -e "$dist_path" && -L "$dist_path" ]] && continue
-		[[ -e "$dist_path" ]] && rm -ri "$dist_path"
+		[[ -e "$DIST_PATH" && -L "$DIST_PATH" ]] && continue
+		[[ -e "$DIST_PATH" ]] && rm -ri "$DIST_PATH"
 
-		ln -s "$path" "$dist_path"
+		ln -s "$FILE" "$DIST_PATH"
 
 	done	
 	shopt -u globstar
-	unset path
+	unset FILE
 }
 install_dotfiles
+
+# Install lib to global user library
+sudo cp dotfiles/local/lib/* /usr/local/lib/
+
+
+# Install custom files
+install_custom_files() {
+	for FILE in custom/*; do
+		local DIST_PATH=$(awk 'NR==2 { print $NF}' "$FILE")
+		[[ $FILE =~ ^/home ]] && 
+		{
+			cp "$FILE" "$DIST_PATH"
+			continue
+		}
+		sudo cp "$FILE" "$DIST_PATH"
+
+	done
+	unset FILE
+}
+install_custom_files
